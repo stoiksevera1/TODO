@@ -4,6 +4,7 @@ import javaDaddy.ToDo.entity.Status;
 import javaDaddy.ToDo.entity.Task;
 import javaDaddy.ToDo.mapper.TaskMapper;
 import javaDaddy.ToDo.service.TaskService;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +37,7 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getTaskById(@PathVariable("id") Long id) {
+    public ResponseEntity<?> getTaskById(@PathVariable("id") @NonNull Long id) {
         try {
             return new ResponseEntity<>(taskMapper.toTaskDto(taskService.getTaskById(id)), HttpStatusCode.valueOf(200));
         } catch (Exception e) {
