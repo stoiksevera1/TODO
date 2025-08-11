@@ -1,15 +1,14 @@
 package javaDaddy.ToDo.service;
 
-import jakarta.transaction.Transactional;
-import javaDaddy.ToDo.exception.TaskNonFoundException;
-import javaDaddy.ToDo.entity.Task;
 import javaDaddy.ToDo.entity.Status;
+import javaDaddy.ToDo.entity.Task;
+import javaDaddy.ToDo.exception.TaskNotFoundException;
 import javaDaddy.ToDo.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-
 
 @Service
 @RequiredArgsConstructor
@@ -17,26 +16,24 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
 
-    @Transactional
+
     public Task addTask(Task task) {
         return taskRepository.save(task);
     }
 
-    @Transactional
     public List<Task> getAllTasks() {
         return taskRepository.findAll();
     }
 
-    @Transactional
-    public Task getTaskById(Long id) throws TaskNonFoundException {
+    public Task getTaskById(Long id) {
         return taskRepository.findById(id)
-                .orElseThrow(() -> new TaskNonFoundException("Задача не найдена!"));
+                .orElseThrow(() -> new TaskNotFoundException("Задача не найдена!"));
     }
 
     @Transactional
-    public Task updateTask(Long id, Task taskUpdate) throws TaskNonFoundException {
+    public Task updateTask(Long id, Task taskUpdate) {
         Task existingTask = taskRepository.findById(id)
-                .orElseThrow(() -> new TaskNonFoundException("Задача не найдена"));
+                .orElseThrow(() -> new TaskNotFoundException("Задача не найдена"));
         existingTask.setName(taskUpdate.getName());
         existingTask.setDescription(taskUpdate.getDescription());
         existingTask.setStartTime(taskUpdate.getStartTime());
@@ -46,28 +43,25 @@ public class TaskService {
     }
 
     @Transactional
-    public void deleteTask(Long id) throws TaskNonFoundException {
-        if (!taskRepository.existsById(id)) {
-            throw new TaskNonFoundException("Задача не найдена");
+    public void deleteTask(Long id) {
+        int affected = taskRepository.deleteByIdReturningCount(id);
+        if (affected == 0) {
+            throw new TaskNotFoundException("Задача не найдена");
         }
-        taskRepository.deleteById(id);
     }
 
-    @Transactional
-    public List<Task> getTasksByStatus(Status status) throws TaskNonFoundException {
+    public List<Task> getTasksByStatus(Status status) {
         List<Task> tasks = taskRepository.findByStatus(status);
         if (tasks.isEmpty()) {
-            throw new TaskNonFoundException("Задачи с таким статусом не найдены");
+            throw new TaskNotFoundException("Задачи с таким статусом не найдены");
         }
         return tasks;
     }
 
-    @Transactional
     public List<Task> getTasksSortedByStatusAsc() {
         return taskRepository.findAllByOrderByStatusAsc();
     }
 
-    @Transactional
     public List<Task> getTasksSortedByEndTimeAsc() {
         return taskRepository.findAllByOrderByEndTimeAsc();
     }
