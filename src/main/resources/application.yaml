@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: ToDo
+  datasource:
+    url: jdbc:postgresql://localhost:5432/TODO
+    username: postgres
+    password: jakson11W
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  jpa:
+    properties:
+      hibernate:
+        transaction:
+          coordinator_class: jdbc
+        format_sql: true
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+server:
+  port: 8080
+  address: localhost
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+    com.zaxxer.hikari: DEBUG

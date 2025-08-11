@@ -2,7 +2,7 @@ package javaDaddy.ToDo;
 
 import javaDaddy.ToDo.entity.Status;
 import javaDaddy.ToDo.entity.Task;
-import javaDaddy.ToDo.exception.TaskNonFoundException;
+import javaDaddy.ToDo.exception.TaskNotFoundException;
 import javaDaddy.ToDo.repository.TaskRepository;
 import javaDaddy.ToDo.service.TaskService;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +63,7 @@ class TaskServiceTest {
     }
 
     @Test
-    void getTaskById_ShouldReturnTask_WhenExists() throws TaskNonFoundException {
+    void getTaskById_ShouldReturnTask_WhenExists() throws TaskNotFoundException {
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
 
         Task result = taskService.getTaskById(1L);
@@ -76,12 +76,12 @@ class TaskServiceTest {
         when(taskRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> taskService.getTaskById(1L))
-                .isInstanceOf(TaskNonFoundException.class)
+                .isInstanceOf(TaskNotFoundException.class)
                 .hasMessageContaining("Задача не найдена!");
     }
 
     @Test
-    void updateTask_ShouldUpdateFields() throws TaskNonFoundException {
+    void updateTask_ShouldUpdateFields() throws TaskNotFoundException {
         Task update = Task.builder()
                 .name("Updated Name")
                 .description("Updated Desc")
@@ -103,28 +103,29 @@ class TaskServiceTest {
         when(taskRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> taskService.updateTask(1L, task))
-                .isInstanceOf(TaskNonFoundException.class);
+                .isInstanceOf(TaskNotFoundException.class);
     }
 
     @Test
-    void deleteTask_ShouldCallDelete_WhenExists() throws TaskNonFoundException {
-        when(taskRepository.existsById(1L)).thenReturn(true);
+    void deleteTask_ShouldCallDelete_WhenExists() {
+        when(taskRepository.deleteByIdReturningCount(1L)).thenReturn(1);
 
         taskService.deleteTask(1L);
 
-        verify(taskRepository).deleteById(1L);
+        verify(taskRepository).deleteByIdReturningCount(1L);
     }
 
     @Test
-    void deleteTask_ShouldThrow_WhenNotExists() {
-        when(taskRepository.existsById(1L)).thenReturn(false);
+    void deleteTask_ShouldThrowTaskNotFoundException_WhenNotExists() {
+        when(taskRepository.deleteByIdReturningCount(1L)).thenReturn(0);
 
         assertThatThrownBy(() -> taskService.deleteTask(1L))
-                .isInstanceOf(TaskNonFoundException.class);
+                .isInstanceOf(TaskNotFoundException.class)
+                .hasMessageContaining("Задача не найдена");
     }
 
     @Test
-    void getTasksByStatus_ShouldReturnTasks() throws TaskNonFoundException {
+    void getTasksByStatus_ShouldReturnTasks() throws TaskNotFoundException {
         when(taskRepository.findByStatus(Status.IN_PROGRESS)).thenReturn(List.of(task));
 
         List<Task> result = taskService.getTasksByStatus(Status.IN_PROGRESS);
@@ -137,7 +138,7 @@ class TaskServiceTest {
         when(taskRepository.findByStatus(Status.IN_PROGRESS)).thenReturn(Collections.emptyList());
 
         assertThatThrownBy(() -> taskService.getTasksByStatus(Status.IN_PROGRESS))
-                .isInstanceOf(TaskNonFoundException.class);
+                .isInstanceOf(TaskNotFoundException.class);
     }
 
     @Test

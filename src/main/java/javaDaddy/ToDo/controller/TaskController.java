@@ -4,81 +4,74 @@ import javaDaddy.ToDo.entity.Status;
 import javaDaddy.ToDo.entity.Task;
 import javaDaddy.ToDo.mapper.TaskMapper;
 import javaDaddy.ToDo.service.TaskService;
+import jakarta.validation.Valid;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatusCode;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/tasks")
 @RequiredArgsConstructor
+@Validated
 public class TaskController {
 
     private final TaskService taskService;
     private final TaskMapper taskMapper;
 
     @PostMapping
-    public ResponseEntity<?> addTask(@RequestBody Task task) {
-        try {
-            return new ResponseEntity<>(taskService.addTask(task), HttpStatusCode.valueOf(201));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Ошибка: " + e.getMessage());
-        }
+    public ResponseEntity<?> addTask(@Valid @RequestBody Task task) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(taskMapper.toTaskDto(taskService.addTask(task)));
     }
 
     @GetMapping
     public ResponseEntity<?> getAllTasks() {
-        try {
-            return new ResponseEntity<>(taskMapper.toTaskDtoList(taskService.getAllTasks()), HttpStatusCode.valueOf(200));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Ошибка: " + e.getMessage());
-        }
+        return ResponseEntity
+                .ok(taskMapper.toTaskDtoList(taskService.getAllTasks()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getTaskById(@PathVariable("id") Long id) {
-        try {
-            return new ResponseEntity<>(taskMapper.toTaskDto(taskService.getTaskById(id)), HttpStatusCode.valueOf(200));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Ошибка: " + e.getMessage());
-        }
+    public ResponseEntity<?> getTaskById(@PathVariable("id") @NonNull Long id) {
+        return ResponseEntity
+                .ok(taskMapper.toTaskDto(taskService.getTaskById(id)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateTask(@PathVariable("id") Long id, @RequestBody Task task) {
-        try {
-            return new ResponseEntity<>(taskMapper.toTaskDto(taskService.updateTask(id, task)), HttpStatusCode.valueOf(201));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Ошибка: " + e.getMessage());
-        }
+    public ResponseEntity<?> updateTask(@PathVariable("id") Long id,
+                                        @Valid @RequestBody Task task) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(taskMapper.toTaskDto(taskService.updateTask(id, task)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteTask(@PathVariable Long id) {
-        try {
-            taskService.deleteTask(id);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Ошибка: " + e.getMessage());
-        }
+    public ResponseEntity<Void> deleteTask(@PathVariable @NonNull Long id) {
+        taskService.deleteTask(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<?> getTasksByStatus(@PathVariable Status status) {
-        try {
-            return new ResponseEntity<>(taskMapper.toTaskDtoList(taskService.getTasksByStatus(status)), HttpStatusCode.valueOf(200));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Ошибка: " + e.getMessage());
-        }
+    public ResponseEntity<?> getTasksByStatus(@PathVariable String status) {
+        Status enumStatus = Status.valueOf(status.toUpperCase());
+        return ResponseEntity.ok(
+                taskMapper.toTaskDtoList(taskService.getTasksByStatus(enumStatus))
+        );
     }
 
     @GetMapping("/status/sorted")
     public ResponseEntity<?> getTasksSortedByStatus() {
-        return ResponseEntity.ok(taskMapper.toTaskDtoList(taskService.getTasksSortedByStatusAsc()));
+        return ResponseEntity
+                .ok(taskMapper.toTaskDtoList(taskService.getTasksSortedByStatusAsc()));
     }
 
     @GetMapping("/endtime/sorted")
     public ResponseEntity<?> getTasksSortedByEndTime() {
-        return ResponseEntity.ok(taskMapper.toTaskDtoListEndTime(taskService.getTasksSortedByEndTimeAsc()));
+        return ResponseEntity
+                .ok(taskMapper.toTaskDtoListEndTime(taskService.getTasksSortedByEndTimeAsc()));
     }
 }
+
